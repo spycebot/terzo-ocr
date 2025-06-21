@@ -15,6 +15,8 @@ def fetch_arguments():
                     help="path to input image to be OCR'd")
     ap.add_argument("-p", "--preprocess", type=str, default="thresh",
                     help="type of preprocessing to be done: thresh or blur")
+    ap.add_argument("-o", "--output", type=str, default="file",
+                    help="output destination: file or console")
     return vars(ap.parse_args())
 
 def load_image():
@@ -27,7 +29,7 @@ def set_grayscale():
     # Check to see if we should apply thresholding to preprocess the image
     if args["preprocess"] == "thresh":
         gray = cv2.threshold(gray, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
-    elif args["preprocess"] == "blur":
+    elif args["output"] == "blur":
         gray = cv2.medianBlur(gray, 3)
     return gray
 
@@ -39,24 +41,44 @@ def write_grayscale():
 
 def output_text(_filename):
     pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
-    text = pytesseract.image_to_string(Image.open(_filename))
-    '''try:
+    text = "OCR operation has not been performed"
+    try:
+        text = pytesseract.image_to_string(Image.open(_filename))
+    except pytesseract.pytesseract.TesseractNotFoundError:
+        print("PyTesseract has not been found. The executable may not have been installed")
     except:
         print("An error occurred in pytesseract.image_to_string")
     finally:
-        print("Finally for pytesseract.image_to_string")'''
+        print("Finally after pytesseract.image_to_string")
 
-    try:
+    # Write text to file or console
+    if args["output"] == 'file':
+        try:
+            with open("{}.txt".format(os.getpid()), "a") as f:
+                f.write(text)
+        except:
+            print("An error occurred writing output file")
+        finally:
+            print("Finally after writing outfile to disk")
+    elif args['output'] == 'console':
         print(text)
+    else:
+        pass
+
+    # Remove intermediate text file
+    try:
         os.remove(_filename)
     except:
         print("An error occurred in removing", str(_filename))
     finally:
-        print("That is all she wrote.")
+        print("Finally after removing", str(_filename))
 
-def show_output_images():
-    # cv.imshow("Image", image)
-    pass
+def show_output_images(_image, _gray):
+    cv2.imshow("Image", _image)
+    cv2.imshow("Output", _gray)
+    # print("Press any key to exit. ")
+    # NG in PyCharm Terminal
+    # cv2.waitKey(0)
 
 if __name__ == "__main__":
     print("Hello", "World", sep=", ", end="!\n")
@@ -67,4 +89,4 @@ if __name__ == "__main__":
     gray_scale = set_grayscale()
     filename = write_grayscale()
     output_text(filename)
-    show_output_images()
+    show_output_images(target_image, gray_scale)

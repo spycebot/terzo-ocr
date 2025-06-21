@@ -17,6 +17,8 @@ def fetch_arguments():
                     help="type of preprocessing to be done: thresh or blur")
     ap.add_argument("-o", "--output", type=str, default="file",
                     help="output destination: file or console")
+    ap.add_argument("-s", "--suppress", type=bool, default=False,
+                    help="suppress the display of image files after OCR operation")
     return vars(ap.parse_args())
 
 def load_image():
@@ -63,7 +65,7 @@ def output_text(_filename):
     elif args['output'] == 'console':
         print(text)
     else:
-        pass
+        print("Unsupported output option selected:", str(args["output"]))
 
     # Remove intermediate text file
     try:
@@ -74,8 +76,9 @@ def output_text(_filename):
         print("Finally after removing", str(_filename))
 
 def show_output_images(_image, _gray):
-    cv2.imshow("Image", _image)
-    cv2.imshow("Output", _gray)
+    if args["suppress"] == False:
+        cv2.imshow("Image", _image)
+        cv2.imshow("Output", _gray)
     # print("Press any key to exit. ")
     # NG in PyCharm Terminal
     # cv2.waitKey(0)
